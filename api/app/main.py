@@ -4,16 +4,30 @@ import os
 import psycopg2
 import redis
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 
 app = FastAPI(title="Containerized Help Desk Platform")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:8081"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 class TicketCreate(BaseModel):
-    employee_name: str
-    issue: str
-    priority: str
+    employee_name: str = Field(min_length=2, max_length=100)
+    issue: str = Field(min_length=5, max_length=500)
+    priority: str = Field(pattern="^(Low|Medium|High|Critical)$")
 
+
+class TicketStatusUpdate(BaseModel):
+    status: str = Field(
+        pattern="^(Open|Assigned|In Progress|Waiting|Resolved|Closed)$"
+    )
 
 def get_database_connection():
     return psycopg2.connect(
@@ -34,9 +48,7 @@ def get_redis_connection():
 
 @app.get("/")
 def root():
-    return {
-        "message": "Containerized Help Desk Platform API is running"
-    }
+    return {"message": "Containerized Help Desk Platform API is running"}
 
 
 @app.get("/health")
@@ -57,7 +69,7 @@ def health():
         raise HTTPException(status_code=503, detail=str(error))
 
 
-@app.post("/tickets")
+@app.post("/tickets", status_code=201)
 def create_ticket(ticket: TicketCreate):
     connection = get_database_connection()
     cursor = connection.cursor()
@@ -68,21 +80,15 @@ def create_ticket(ticket: TicketCreate):
         VALUES (%s, %s, %s)
         RETURNING id, employee_name, issue, priority, status, created_at;
         """,
-        (
-            ticket.employee_name,
-            ticket.issue,
-            ticket.priority,
-        ),
+        (ticket.employee_name, ticket.issue, ticket.priority),
     )
 
     created_ticket = cursor.fetchone()
     connection.commit()
-
     cursor.close()
     connection.close()
 
-    redis_connection = get_redis_connection()
-    redis_connection.delete("tickets:all")
+    get_redis_connection().delete("tickets:all")
 
     return {
         "id": created_ticket[0],
@@ -110,20 +116,13 @@ def get_tickets():
 
     cursor.execute(
         """
-        SELECT
-            id,
-            employee_name,
-            issue,
-            priority,
-            status,
-            created_at
+        SELECT id, employee_name, issue, priority, status, created_at
         FROM tickets
         ORDER BY created_at DESC;
         """
     )
 
     rows = cursor.fetchall()
-
     cursor.close()
     connection.close()
 
@@ -139,13 +138,44 @@ def get_tickets():
         for row in rows
     ]
 
-    redis_connection.setex(
-        "tickets:all",
-        60,
-        json.dumps(tickets),
+    redis_connection.setex("tickets:all", 60, json.dumps(tickets))
+
+    return {"source": "postgresql", "tickets": tickets}
+
+    
+@app.patch("/tickets/{ticket_id}/status")
+def update_ticket_status(ticket_id: int, update: TicketStatusUpdate):
+    connection = get_database_connection()
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        UPDATE tickets
+        SET status = %s
+        WHERE id = %s
+        RETURNING id, employee_name, issue, priority, status, created_at;
+        """,
+        (update.status, ticket_id),
     )
 
+    updated_ticket = cursor.fetchone()
+
+    if updated_ticket is None:
+        cursor.close()
+        connection.close()
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    connection.commit()
+    cursor.close()
+    connection.close()
+
+    get_redis_connection().delete("tickets:all")
+
     return {
-        "source": "postgresql",
-        "tickets": tickets,
-    }
+        "id": updated_ticket[0],
+        "employee_name": updated_ticket[1],
+        "issue": updated_ticket[2],
+        "priority": updated_ticket[3],
+        "status": updated_ticket[4],
+        "created_at": str(updated_ticket[5]),
+    } 

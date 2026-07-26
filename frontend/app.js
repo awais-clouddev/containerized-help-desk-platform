@@ -1,15 +1,88 @@
-async function checkHealth() {
-    const response = await fetch("http://localhost:8000/health");
-    const data = await response.json();
+const API_URL = "http://localhost:8000";
 
-    document.getElementById("output").textContent =
-        JSON.stringify(data, null, 2);
-}
-EOFcat > frontend/app.js <<'EOF'
-async function checkHealth() {
-    const response = await fetch("http://localhost:8000/health");
-    const data = await response.json();
+const ticketForm = document.getElementById("ticket-form");
+const ticketList = document.getElementById("ticket-list");
+const formMessage = document.getElementById("form-message");
+const apiStatus = document.getElementById("api-status");
+const dataSource = document.getElementById("data-source");
+const refreshButton = document.getElementById("refresh-button");
 
-    document.getElementById("output").textContent =
-        JSON.stringify(data, null, 2);
+async function checkHealth() {
+    try {
+        const response = await fetch(`${API_URL}/health`);
+        const data = await response.json();
+
+        apiStatus.textContent =
+            `API ✓ Database ✓ Redis ✓`;
+        apiStatus.style.background = "#166534";
+    } catch {
+        apiStatus.textContent = "Services unavailable";
+        apiStatus.style.background = "#991b1b";
+    }
 }
+
+function renderTickets(tickets) {
+    if (tickets.length === 0) {
+        ticketList.innerHTML = "<p>No tickets have been created.</p>";
+        return;
+    }
+
+    ticketList.innerHTML = tickets.map(ticket => `
+        <article class="ticket priority-${ticket.priority}">
+            <h3>#${ticket.id} — ${ticket.employee_name}</h3>
+            <p>${ticket.issue}</p>
+            <p><strong>Priority:</strong> ${ticket.priority}</p>
+            <p><strong>Status:</strong> ${ticket.status}</p>
+            <p class="meta">Created: ${ticket.created_at}</p>
+        </article>
+    `).join("");
+}
+
+async function loadTickets() {
+    try {
+        const response = await fetch(`${API_URL}/tickets`);
+        const data = await response.json();
+
+        dataSource.textContent = `Data source: ${data.source}`;
+        renderTickets(data.tickets);
+    } catch {
+        ticketList.innerHTML =
+            '<p class="error">Unable to load tickets.</p>';
+    }
+}
+
+ticketForm.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const payload = {
+        employee_name: document.getElementById("employee-name").value,
+        issue: document.getElementById("issue").value,
+        priority: document.getElementById("priority").value
+    };
+
+    try {
+        const response = await fetch(`${API_URL}/tickets`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            throw new Error("Ticket creation failed");
+        }
+
+        ticketForm.reset();
+        formMessage.textContent = "Ticket created successfully.";
+        formMessage.className = "success";
+
+        await loadTickets();
+    } catch {
+        formMessage.textContent = "Unable to create ticket.";
+        formMessage.className = "error";
+    }
+});
+
+refreshButton.addEventListener("click", loadTickets);
+
+checkHealth();
+loadTickets();

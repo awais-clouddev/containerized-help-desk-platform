@@ -3,16 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Containerized Help Desk Platform</title>
+    <title>Help Desk Platform</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Containerized Help Desk Platform</h1>
-    <p>Welcome to the Help Desk System.</p>
+    <header>
+        <div>
+            <h1>Help Desk Platform</h1>
+            <p>Internal IT support and ticket operations</p>
+        </div>
+        <span id="api-status">Checking services...</span>
+    </header>
 
-    <button onclick="checkHealth()">Check API Health</button>
+    <main>
+        <section class="panel">
+            <h2>Create Support Ticket</h2>
 
-    <pre id="output"></pre>
+            <form id="ticket-form">
+                <label for="employee-name">Employee name</label>
+                <input id="employee-name" required minlength="2">
+
+                <label for="issue">Issue description</label>
+                <textarea id="issue" required minlength="5"></textarea>
+
+                <label for="priority">Priority</label>
+                <select id="priority">
+                    <option>Low</option>
+                    <option selected>Medium</option>
+                    <option>High</option>
+                    <option>Critical</option>
+                </select>
+
+                <button type="submit">Create Ticket</button>
+            </form>
+
+            <p id="form-message"></p>
+        </section>
+
+        <section class="panel tickets-panel">
+            <div class="section-header">
+                <h2>Support Tickets</h2>
+                <button id="refresh-button" type="button">Refresh</button>
+            </div>
+
+            <p id="data-source"></p>
+            <div id="ticket-list"></div>
+        </section>
+    </main>
 
     <script src="app.js"></script>
 </body>

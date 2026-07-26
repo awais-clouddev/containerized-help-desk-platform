@@ -1,21 +1,149 @@
-body {
-    font-family: Arial, sans-serif;
-    margin: 40px;
-    background: #f5f5f5;
+* {
+    box-sizing: border-box;
 }
 
-h1 {
-    color: #1f2937;
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 6%;
+    background: #0f172a;
+    color: white;
+}
+
+header h1,
+header p {
+    margin: 0;
+}
+
+header p {
+    margin-top: 6px;
+    color: #cbd5e1;
+}
+
+#api-status {
+    padding: 8px 14px;
+    border-radius: 20px;
+    background: #334155;
+}
+
+main {
+    display: grid;
+    grid-template-columns: minmax(300px, 420px) 1fr;
+    gap: 24px;
+    padding: 30px 6%;
+}
+
+.panel {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 8px 25px rgba(15, 23, 42, 0.08);
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+input,
+textarea,
+select,
+button {
+    font: inherit;
+}
+
+input,
+textarea,
+select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+}
+
+textarea {
+    min-height: 120px;
+    resize: vertical;
 }
 
 button {
-    padding: 10px 20px;
+    border: 0;
+    border-radius: 7px;
+    padding: 11px 16px;
+    background: #2563eb;
+    color: white;
     cursor: pointer;
 }
 
-pre {
-    margin-top: 20px;
-    background: white;
-    padding: 15px;
-    border-radius: 6px;
+button:hover {
+    background: #1d4ed8;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ticket {
+    margin-top: 14px;
+    padding: 16px;
+    border: 1px solid #e2e8f0;
+    border-left: 5px solid #2563eb;
+    border-radius: 8px;
+}
+
+.ticket h3,
+.ticket p {
+    margin: 5px 0;
+}
+
+.priority-Critical {
+    border-left-color: #dc2626;
+}
+
+.priority-High {
+    border-left-color: #ea580c;
+}
+
+.priority-Medium {
+    border-left-color: #ca8a04;
+}
+
+.priority-Low {
+    border-left-color: #16a34a;
+}
+
+.meta {
+    color: #64748b;
+    font-size: 14px;
+}
+
+.success {
+    color: #15803d;
+}
+
+.error {
+    color: #dc2626;
+}
+
+@media (max-width: 850px) {
+    main {
+        grid-template-columns: 1fr;
+    }
+
+    header {
+        align-items: flex-start;
+        gap: 18px;
+        flex-direction: column;
+    }
 }
