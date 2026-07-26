@@ -12,12 +12,29 @@ async function checkHealth() {
         const response = await fetch(`${API_URL}/health`);
         const data = await response.json();
 
-        apiStatus.textContent =
-            `API ✓ Database ✓ Redis ✓`;
+        apiStatus.textContent = "API ✓ Database ✓ Redis ✓";
         apiStatus.style.background = "#166534";
     } catch {
         apiStatus.textContent = "Services unavailable";
         apiStatus.style.background = "#991b1b";
+    }
+}
+
+async function loadDashboard() {
+    try {
+        const response = await fetch(`${API_URL}/dashboard`);
+        const data = await response.json();
+
+        document.getElementById("total-count").textContent = data.total;
+        document.getElementById("open-count").textContent = data.open;
+        document.getElementById("progress-count").textContent =
+            data.in_progress;
+        document.getElementById("resolved-count").textContent =
+            data.resolved;
+        document.getElementById("critical-count").textContent =
+            data.critical;
+    } catch {
+        console.error("Unable to load dashboard statistics.");
     }
 }
 
@@ -55,15 +72,20 @@ ticketForm.addEventListener("submit", async event => {
     event.preventDefault();
 
     const payload = {
-        employee_name: document.getElementById("employee-name").value,
-        issue: document.getElementById("issue").value,
-        priority: document.getElementById("priority").value
+        employee_name:
+            document.getElementById("employee-name").value,
+        issue:
+            document.getElementById("issue").value,
+        priority:
+            document.getElementById("priority").value
     };
 
     try {
         const response = await fetch(`${API_URL}/tickets`, {
             method: "POST",
-            headers: {"Content-Type": "application/json"},
+            headers: {
+                "Content-Type": "application/json"
+            },
             body: JSON.stringify(payload)
         });
 
@@ -76,13 +98,18 @@ ticketForm.addEventListener("submit", async event => {
         formMessage.className = "success";
 
         await loadTickets();
+        await loadDashboard();
     } catch {
         formMessage.textContent = "Unable to create ticket.";
         formMessage.className = "error";
     }
 });
 
-refreshButton.addEventListener("click", loadTickets);
+refreshButton.addEventListener("click", async () => {
+    await loadTickets();
+    await loadDashboard();
+});
 
 checkHealth();
+loadDashboard();
 loadTickets();

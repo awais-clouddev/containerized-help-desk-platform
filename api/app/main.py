@@ -3,7 +3,7 @@ import os
 
 import psycopg2
 import redis
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -101,9 +101,11 @@ def create_ticket(ticket: TicketCreate):
 
 
 @app.get("/tickets")
-def get_tickets():
+def get_tickets(search: str = Query(default="")):
     redis_connection = get_redis_connection()
-    cached_tickets = redis_connection.get("tickets:all")
+    cache_key = f"tickets:search:{search.lower()}"
+
+    cached_tickets = redis_connection.get(cache_key)
 
     if cached_tickets:
         return {
@@ -114,15 +116,31 @@ def get_tickets():
     connection = get_database_connection()
     cursor = connection.cursor()
 
-    cursor.execute(
-        """
-        SELECT id, employee_name, issue, priority, status, created_at
-        FROM tickets
-        ORDER BY created_at DESC;
-        """
-    )
+    if search:
+        search_pattern = f"%{search}%"
+
+        cursor.execute(
+            """
+            SELECT id, employee_name, issue, priority, status, created_at
+            FROM tickets
+            WHERE employee_name ILIKE %s
+               OR issue ILIKE %s
+               OR CAST(id AS TEXT) ILIKE %s
+            ORDER BY created_at DESC;
+            """,
+            (search_pattern, search_pattern, search_pattern),
+        )
+    else:
+        cursor.execute(
+            """
+            SELECT id, employee_name, issue, priority, status, created_at
+            FROM tickets
+            ORDER BY created_at DESC;
+            """
+        )
 
     rows = cursor.fetchall()
+
     cursor.close()
     connection.close()
 
@@ -138,11 +156,17 @@ def get_tickets():
         for row in rows
     ]
 
-    redis_connection.setex("tickets:all", 60, json.dumps(tickets))
+    redis_connection.setex(
+        cache_key,
+        60,
+        json.dumps(tickets),
+    )
 
-    return {"source": "postgresql", "tickets": tickets}
+    return {
+        "source": "postgresql",
+        "tickets": tickets,
+    }
 
-    
 @app.patch("/tickets/{ticket_id}/status")
 def update_ticket_status(ticket_id: int, update: TicketStatusUpdate):
     connection = get_database_connection()
@@ -179,3 +203,35 @@ def update_ticket_status(ticket_id: int, update: TicketStatusUpdate):
         "status": updated_ticket[4],
         "created_at": str(updated_ticket[5]),
     } 
+
+
+@app.get("/dashboard")
+def dashboard_summary():
+    connection = get_database_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT COUNT(*) FROM tickets;")
+    total = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM tickets WHERE status='Open';")
+    open_count = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM tickets WHERE status='In Progress';")
+    progress_count = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM tickets WHERE status='Resolved';")
+    resolved_count = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM tickets WHERE priority='Critical';")
+    critical_count = cursor.fetchone()[0]
+
+    cursor.close()
+    connection.close()
+
+    return {
+        "total": total,
+        "open": open_count,
+        "in_progress": progress_count,
+        "resolved": resolved_count,
+        "critical": critical_count,
+    }
