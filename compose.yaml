@@ -1,0 +1,42 @@
+services:
+  api:
+    build: ./api
+    container_name: helpdesk-api
+
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_NAME: helpdesk
+      DATABASE_USER: helpdesk
+      DATABASE_PASSWORD: password
+
+    depends_on:
+      - postgres
+
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build: ./frontend
+    container_name: helpdesk-frontend
+
+    ports:
+      - "8081:80"
+
+  postgres:
+    image: postgres:17
+    container_name: helpdesk-postgres
+
+    environment:
+      POSTGRES_DB: helpdesk
+      POSTGRES_USER: helpdesk
+      POSTGRES_PASSWORD: password
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  postgres_data:
