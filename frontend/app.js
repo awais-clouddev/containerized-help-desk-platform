@@ -6,6 +6,9 @@ const formMessage = document.getElementById("form-message");
 const apiStatus = document.getElementById("api-status");
 const dataSource = document.getElementById("data-source");
 const refreshButton = document.getElementById("refresh-button");
+const searchBox =
+    document.getElementById("search-box");
+
 
 async function checkHealth() {
     try {
@@ -55,9 +58,12 @@ function renderTickets(tickets) {
     `).join("");
 }
 
-async function loadTickets() {
+async function loadTickets(search = "") {
     try {
-        const response = await fetch(`${API_URL}/tickets`);
+        const response =
+    await fetch(
+        `${API_URL}/tickets?search=${encodeURIComponent(search)}`
+    );
         const data = await response.json();
 
         dataSource.textContent = `Data source: ${data.source}`;
@@ -113,3 +119,6 @@ refreshButton.addEventListener("click", async () => {
 checkHealth();
 loadDashboard();
 loadTickets();
+searchBox.addEventListener("input", () => {
+    loadTickets(searchBox.value);
+});

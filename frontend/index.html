@@ -70,11 +70,23 @@
         </section>
 
         <section class="panel tickets-panel">
-            <div class="section-header">
-                <h2>Support Tickets</h2>
-                <button id="refresh-button" type="button">Refresh</button>
-            </div>
+           <div class="section-header">
+    <h2>Support Tickets</h2>
 
+    <div>
+        <input
+            id="search-box"
+            type="text"
+            placeholder="Search tickets..."
+        >
+
+        <button
+            id="refresh-button"
+            type="button">
+            Refresh
+        </button>
+    </div>
+</div>
             <p id="data-source"></p>
             <div id="ticket-list"></div>
         </section>
