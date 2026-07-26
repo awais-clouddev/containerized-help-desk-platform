@@ -8,9 +8,11 @@ services:
       DATABASE_NAME: helpdesk
       DATABASE_USER: helpdesk
       DATABASE_PASSWORD: password
+      REDIS_HOST: redis
 
     depends_on:
       - postgres
+      - redis
 
     ports:
       - "8000:8000"
@@ -37,6 +39,13 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  redis:
+    image: redis:8-alpine
+    container_name: helpdesk-redis
+
+    ports:
+      - "6379:6379"
 
 volumes:
   postgres_data:
