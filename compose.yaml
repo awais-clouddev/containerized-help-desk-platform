@@ -2,6 +2,7 @@ services:
   api:
     build: ./api
     container_name: helpdesk-api
+    restart: unless-stopped
 
     environment:
       DATABASE_HOST: postgres
@@ -31,6 +32,7 @@ services:
   frontend:
     build: ./frontend
     container_name: helpdesk-frontend
+    restart: unless-stopped
 
     ports:
       - "8081:80"
@@ -48,6 +50,7 @@ services:
   postgres:
     image: postgres:17
     container_name: helpdesk-postgres
+    restart: unless-stopped
 
     environment:
       POSTGRES_DB: helpdesk
@@ -71,6 +74,7 @@ services:
   redis:
     image: redis:8-alpine
     container_name: helpdesk-redis
+    restart: unless-stopped
 
     networks:
       - backend_network
