@@ -3,57 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Help Desk Platform</title>
+    <title>Containerized Help Desk Platform</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header>
+    <header class="app-header">
         <div>
-            <h1>Help Desk Platform</h1>
-            <p>Internal IT support and ticket operations</p>
+            <p class="eyebrow">Dockerized Internal Operations Platform</p>
+            <h1>Containerized Help Desk Platform</h1>
+            <p class="subtitle">
+                Multi-container support ticket system running with Nginx, FastAPI,
+                PostgreSQL, Redis, Docker networks, health checks, and backup automation.
+            </p>
         </div>
-        <span id="api-status">Checking services...</span>
+
+        <span id="api-status" class="status-badge">Checking services...</span>
     </header>
 
     <main>
-
-
         <section class="stats-grid">
-    <article class="stat-card">
-        <span>Total Tickets</span>
-        <strong id="total-count">0</strong>
-    </article>
+            <article class="stat-card">
+                <span>Total Tickets</span>
+                <strong id="total-count">0</strong>
+                <p>All support requests</p>
+            </article>
 
-    <article class="stat-card">
-        <span>Open</span>
-        <strong id="open-count">0</strong>
-    </article>
+            <article class="stat-card">
+                <span>Open</span>
+                <strong id="open-count">0</strong>
+                <p>Waiting for action</p>
+            </article>
 
-    <article class="stat-card">
-        <span>In Progress</span>
-        <strong id="progress-count">0</strong>
-    </article>
+            <article class="stat-card">
+                <span>In Progress</span>
+                <strong id="progress-count">0</strong>
+                <p>Currently being handled</p>
+            </article>
 
-    <article class="stat-card">
-        <span>Resolved</span>
-        <strong id="resolved-count">0</strong>
-    </article>
+            <article class="stat-card">
+                <span>Resolved</span>
+                <strong id="resolved-count">0</strong>
+                <p>Completed tickets</p>
+            </article>
 
-    <article class="stat-card critical-card">
-        <span>Critical</span>
-        <strong id="critical-count">0</strong>
-    </article>
-</section>
+            <article class="stat-card critical-card">
+                <span>Critical</span>
+                <strong id="critical-count">0</strong>
+                <p>High-impact incidents</p>
+            </article>
+        </section>
 
-        <section class="panel">
-            <h2>Create Support Ticket</h2>
+        <section class="panel create-panel">
+            <div class="panel-title">
+                <div>
+                    <p class="eyebrow">Ticket Intake</p>
+                    <h2>Create Support Ticket</h2>
+                </div>
+            </div>
 
             <form id="ticket-form">
                 <label for="employee-name">Employee name</label>
-                <input id="employee-name" required minlength="2">
+                <input
+                    id="employee-name"
+                    placeholder="Example: Muhammad Awais"
+                    required
+                    minlength="2"
+                >
 
                 <label for="issue">Issue description</label>
-                <textarea id="issue" required minlength="5"></textarea>
+                <textarea
+                    id="issue"
+                    placeholder="Example: Unable to access company email"
+                    required
+                    minlength="5"></textarea>
 
                 <label for="priority">Priority</label>
                 <select id="priority">
@@ -70,27 +92,38 @@
         </section>
 
         <section class="panel tickets-panel">
-           <div class="section-header">
-    <h2>Support Tickets</h2>
+            <div class="section-header">
+                <div>
+                    <p class="eyebrow">Operations Queue</p>
+                    <h2>Support Tickets</h2>
+                </div>
 
-    <div>
-        <input
-            id="search-box"
-            type="text"
-            placeholder="Search tickets..."
-        >
+                <div class="ticket-actions">
+                    <input
+                        id="search-box"
+                        type="text"
+                        placeholder="Search tickets..."
+                    >
 
-        <button
-            id="refresh-button"
-            type="button">
-            Refresh
-        </button>
-    </div>
-</div>
+                    <button id="refresh-button" type="button">
+                        Refresh
+                    </button>
+                </div>
+            </div>
+
             <p id="data-source"></p>
             <div id="ticket-list"></div>
         </section>
     </main>
+
+    <footer>
+        <span>Docker Compose</span>
+        <span>Nginx</span>
+        <span>FastAPI</span>
+        <span>PostgreSQL</span>
+        <span>Redis</span>
+        <span>Health Checks</span>
+    </footer>
 
     <script src="app.js"></script>
 </body>
