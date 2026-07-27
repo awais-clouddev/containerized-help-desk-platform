@@ -5,11 +5,11 @@ services:
     restart: unless-stopped
 
     environment:
-      DATABASE_HOST: postgres
-      DATABASE_NAME: helpdesk
-      DATABASE_USER: helpdesk
-      DATABASE_PASSWORD: password
-      REDIS_HOST: redis
+      DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      REDIS_HOST: ${REDIS_HOST}
 
     depends_on:
       - postgres
@@ -53,9 +53,9 @@ services:
     restart: unless-stopped
 
     environment:
-      POSTGRES_DB: helpdesk
-      POSTGRES_USER: helpdesk
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
 
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -65,7 +65,7 @@ services:
       - backend_network
 
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U helpdesk -d helpdesk"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 30s
       timeout: 10s
       retries: 3
