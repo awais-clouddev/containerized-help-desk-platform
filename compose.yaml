@@ -17,12 +17,19 @@ services:
     ports:
       - "8000:8000"
 
+    networks:
+      - frontend_network
+      - backend_network
+
   frontend:
     build: ./frontend
     container_name: helpdesk-frontend
 
     ports:
       - "8081:80"
+
+    networks:
+      - frontend_network
 
   postgres:
     image: postgres:17
@@ -33,19 +40,23 @@ services:
       POSTGRES_USER: helpdesk
       POSTGRES_PASSWORD: password
 
-    ports:
-      - "5432:5432"
-
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+    networks:
+      - backend_network
 
   redis:
     image: redis:8-alpine
     container_name: helpdesk-redis
 
-    ports:
-      - "6379:6379"
+    networks:
+      - backend_network
 
 volumes:
   postgres_data:
+
+networks:
+  frontend_network:
+  backend_network:
