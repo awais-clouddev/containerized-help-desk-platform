@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:8000";
+const API_URL = "/api";
 
 const ticketForm = document.getElementById("ticket-form");
 const ticketList = document.getElementById("ticket-list");

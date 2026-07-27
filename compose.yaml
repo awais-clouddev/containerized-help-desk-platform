@@ -1,4 +1,29 @@
 services:
+  nginx:
+    image: nginx:alpine
+    container_name: helpdesk-nginx
+    restart: unless-stopped
+
+    ports:
+      - "8090:80"
+
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
+    depends_on:
+      - frontend
+      - api
+
+    networks:
+      - frontend_network
+
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
   api:
     build: ./api
     container_name: helpdesk-api
@@ -15,9 +40,6 @@ services:
       - postgres
       - redis
 
-    ports:
-      - "8000:8000"
-
     networks:
       - frontend_network
       - backend_network
@@ -33,9 +55,6 @@ services:
     build: ./frontend
     container_name: helpdesk-frontend
     restart: unless-stopped
-
-    ports:
-      - "8081:80"
 
     networks:
       - frontend_network
