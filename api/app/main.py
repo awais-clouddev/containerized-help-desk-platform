@@ -29,6 +29,7 @@ class TicketStatusUpdate(BaseModel):
         pattern="^(Open|Assigned|In Progress|Waiting|Resolved|Closed)$"
     )
 
+
 def get_database_connection():
     return psycopg2.connect(
         host=os.getenv("DATABASE_HOST", "postgres"),
@@ -44,6 +45,13 @@ def get_redis_connection():
         port=6379,
         decode_responses=True,
     )
+
+
+def clear_ticket_cache():
+    redis_connection = get_redis_connection()
+
+    for key in redis_connection.scan_iter("tickets:*"):
+        redis_connection.delete(key)
 
 
 @app.get("/")
@@ -88,7 +96,7 @@ def create_ticket(ticket: TicketCreate):
     cursor.close()
     connection.close()
 
-    get_redis_connection().delete("tickets:all")
+    clear_ticket_cache()
 
     return {
         "id": created_ticket[0],
@@ -101,9 +109,17 @@ def create_ticket(ticket: TicketCreate):
 
 
 @app.get("/tickets")
-def get_tickets(search: str = Query(default="")):
+def get_tickets(
+    search: str = Query(default=""),
+    status: str = Query(default=""),
+    priority: str = Query(default=""),
+):
     redis_connection = get_redis_connection()
-    cache_key = f"tickets:search:{search.lower()}"
+
+    cache_key = (
+        f"tickets:search:{search.lower()}:"
+        f"status:{status.lower()}:priority:{priority.lower()}"
+    )
 
     cached_tickets = redis_connection.get(cache_key)
 
@@ -116,29 +132,43 @@ def get_tickets(search: str = Query(default="")):
     connection = get_database_connection()
     cursor = connection.cursor()
 
+    conditions = []
+    parameters = []
+
     if search:
         search_pattern = f"%{search}%"
-
-        cursor.execute(
+        conditions.append(
             """
-            SELECT id, employee_name, issue, priority, status, created_at
-            FROM tickets
-            WHERE employee_name ILIKE %s
-               OR issue ILIKE %s
-               OR CAST(id AS TEXT) ILIKE %s
-            ORDER BY created_at DESC;
-            """,
-            (search_pattern, search_pattern, search_pattern),
-        )
-    else:
-        cursor.execute(
-            """
-            SELECT id, employee_name, issue, priority, status, created_at
-            FROM tickets
-            ORDER BY created_at DESC;
+            (
+                employee_name ILIKE %s
+                OR issue ILIKE %s
+                OR CAST(id AS TEXT) ILIKE %s
+            )
             """
         )
+        parameters.extend(
+            [search_pattern, search_pattern, search_pattern]
+        )
 
+    if status:
+        conditions.append("status = %s")
+        parameters.append(status)
+
+    if priority:
+        conditions.append("priority = %s")
+        parameters.append(priority)
+
+    query = """
+        SELECT id, employee_name, issue, priority, status, created_at
+        FROM tickets
+    """
+
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+
+    query += " ORDER BY created_at DESC;"
+
+    cursor.execute(query, parameters)
     rows = cursor.fetchall()
 
     cursor.close()
@@ -167,6 +197,7 @@ def get_tickets(search: str = Query(default="")):
         "tickets": tickets,
     }
 
+
 @app.patch("/tickets/{ticket_id}/status")
 def update_ticket_status(ticket_id: int, update: TicketStatusUpdate):
     connection = get_database_connection()
@@ -193,7 +224,7 @@ def update_ticket_status(ticket_id: int, update: TicketStatusUpdate):
     cursor.close()
     connection.close()
 
-    get_redis_connection().delete("tickets:all")
+    clear_ticket_cache()
 
     return {
         "id": updated_ticket[0],
@@ -202,7 +233,7 @@ def update_ticket_status(ticket_id: int, update: TicketStatusUpdate):
         "priority": updated_ticket[3],
         "status": updated_ticket[4],
         "created_at": str(updated_ticket[5]),
-    } 
+    }
 
 
 @app.get("/dashboard")
