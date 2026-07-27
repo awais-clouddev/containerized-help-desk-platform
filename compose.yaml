@@ -3,6 +3,8 @@ services:
     image: nginx:alpine
     container_name: helpdesk-nginx
     restart: unless-stopped
+    mem_limit: 256m
+    cpus: "0.25"
 
     ports:
       - "8090:80"
@@ -28,6 +30,8 @@ services:
     build: ./api
     container_name: helpdesk-api
     restart: unless-stopped
+    mem_limit: 512m
+    cpus: "0.50"
 
     environment:
       DATABASE_HOST: ${DATABASE_HOST}
@@ -55,6 +59,8 @@ services:
     build: ./frontend
     container_name: helpdesk-frontend
     restart: unless-stopped
+    mem_limit: 256m
+    cpus: "0.25"
 
     networks:
       - frontend_network
@@ -70,6 +76,8 @@ services:
     image: postgres:17
     container_name: helpdesk-postgres
     restart: unless-stopped
+    mem_limit: 1g
+    cpus: "1.00"
 
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
@@ -94,6 +102,8 @@ services:
     image: redis:8-alpine
     container_name: helpdesk-redis
     restart: unless-stopped
+    mem_limit: 256m
+    cpus: "0.25"
 
     networks:
       - backend_network
