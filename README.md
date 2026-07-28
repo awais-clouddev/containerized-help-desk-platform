@@ -130,7 +130,7 @@ containerized-help-desk-platform/
 ### 1. Clone the repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/awais-clouddev/containerized-help-desk-platform.git
 cd containerized-help-desk-platform
 ```
 
