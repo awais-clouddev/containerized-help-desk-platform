@@ -24,20 +24,32 @@ The full platform runs through Docker Compose using multiple containers.
 
 ## Architecture
 
-```text
-Browser
-   |
-   v
-Nginx Reverse Proxy
-   |
-   +------------------> Frontend Container
-   |
-   +------------------> FastAPI Backend Container
-                              |
-                              +------> PostgreSQL Database
-                              |
-                              +------> Redis Cache
+```mermaid
+flowchart LR
+    B["Browser / User"]
+    N["Nginx Reverse Proxy"]
+    F["Frontend Container"]
+    A["FastAPI Backend Container"]
+    P["PostgreSQL Database"]
+    R["Redis Cache"]
+
+    B --> N
+    N --> F
+    N --> A
+    A --> P
+    A --> R
+
+    classDef entry fill:#eef2ff,stroke:#4f46e5,stroke-width:2px,color:#111827;
+    classDef app fill:#ecfeff,stroke:#0891b2,stroke-width:2px,color:#111827;
+    classDef data fill:#f0fdf4,stroke:#16a34a,stroke-width:2px,color:#111827;
+
+    class B,N entry;
+    class F,A app;
+    class P,R data;
 ```
+
+This architecture shows how browser traffic enters the platform through Nginx, which routes frontend requests to the frontend container and API requests to the FastAPI backend container. The backend then communicates privately with PostgreSQL for persistent storage and Redis for caching.
+
 
 ---
 
