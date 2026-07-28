@@ -448,6 +448,7 @@ Through this project, I practiced:
 ## Portfolio Summary
 
 This project demonstrates the ability to containerize and operate a realistic multi-service application using Docker and Docker Compose. It focuses on DevOps responsibilities such as orchestration, networking, service reliability, configuration management, backup automation, monitoring, and operational readiness.
+
 ---
 
 ## License
@@ -460,10 +461,10 @@ See the [LICENSE](LICENSE) file for details.
 
 ## Author
 
-**Muhammad Awais**  
+**Muhammad Awais**
+
 Cloud & DevOps Engineer
 
-GitHub: https://github.com/awais-clouddev  
-LinkedIn: Coming Soon
+GitHub: [awais-clouddev](https://github.com/awais-clouddev)
 
-If you found this project useful, consider giving it a star on GitHub.
+⭐ If you found this project useful, consider giving it a star.
