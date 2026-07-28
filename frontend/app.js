@@ -6,14 +6,30 @@ const formMessage = document.getElementById("form-message");
 const apiStatus = document.getElementById("api-status");
 const dataSource = document.getElementById("data-source");
 const refreshButton = document.getElementById("refresh-button");
-const searchBox =
-    document.getElementById("search-box");
+const searchBox = document.getElementById("search-box");
 
+const allowedPriorities = ["Low", "Medium", "High", "Critical"];
+
+function escapeHTML(value) {
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+function getPriorityClass(priority) {
+    if (allowedPriorities.includes(priority)) {
+        return `priority-${priority}`;
+    }
+
+    return "priority-Low";
+}
 
 async function checkHealth() {
     try {
-        const response = await fetch(`${API_URL}/health`);
-        const data = await response.json();
+        await fetch(`${API_URL}/health`);
 
         apiStatus.textContent = "API ✓ Database ✓ Redis ✓";
         apiStatus.style.background = "#166534";
@@ -47,23 +63,26 @@ function renderTickets(tickets) {
         return;
     }
 
-    ticketList.innerHTML = tickets.map(ticket => `
-        <article class="ticket priority-${ticket.priority}">
-            <h3>#${ticket.id} — ${ticket.employee_name}</h3>
-            <p>${ticket.issue}</p>
-            <p><strong>Priority:</strong> ${ticket.priority}</p>
-            <p><strong>Status:</strong> ${ticket.status}</p>
-            <p class="meta">Created: ${ticket.created_at}</p>
-        </article>
-    `).join("");
+    ticketList.innerHTML = tickets.map(ticket => {
+        const priorityClass = getPriorityClass(ticket.priority);
+
+        return `
+            <article class="ticket ${priorityClass}">
+                <h3>#${escapeHTML(ticket.id)} — ${escapeHTML(ticket.employee_name)}</h3>
+                <p>${escapeHTML(ticket.issue)}</p>
+                <p><strong>Priority:</strong> ${escapeHTML(ticket.priority)}</p>
+                <p><strong>Status:</strong> ${escapeHTML(ticket.status)}</p>
+                <p class="meta">Created: ${escapeHTML(ticket.created_at)}</p>
+            </article>
+        `;
+    }).join("");
 }
 
 async function loadTickets(search = "") {
     try {
-        const response =
-    await fetch(
-        `${API_URL}/tickets?search=${encodeURIComponent(search)}`
-    );
+        const response = await fetch(
+            `${API_URL}/tickets?search=${encodeURIComponent(search)}`
+        );
         const data = await response.json();
 
         dataSource.textContent = `Data source: ${data.source}`;
@@ -78,12 +97,9 @@ ticketForm.addEventListener("submit", async event => {
     event.preventDefault();
 
     const payload = {
-        employee_name:
-            document.getElementById("employee-name").value,
-        issue:
-            document.getElementById("issue").value,
-        priority:
-            document.getElementById("priority").value
+        employee_name: document.getElementById("employee-name").value,
+        issue: document.getElementById("issue").value,
+        priority: document.getElementById("priority").value
     };
 
     try {
@@ -116,9 +132,10 @@ refreshButton.addEventListener("click", async () => {
     await loadDashboard();
 });
 
-checkHealth();
-loadDashboard();
-loadTickets();
 searchBox.addEventListener("input", () => {
     loadTickets(searchBox.value);
 });
+
+checkHealth();
+loadDashboard();
+loadTickets();
