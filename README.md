@@ -406,15 +406,25 @@ appuser
 
 ## Screenshots
 
-Screenshots will be added in the `screenshots/` directory.
+### Application Dashboard
 
-Planned screenshots:
+![Application Dashboard](screenshots/application-dashboard.png)
 
-- Application dashboard
-- Docker containers running healthy
-- Nginx reverse proxy health endpoint
-- Backup script output
-- Platform health script output
+### Healthy Docker Containers
+
+![Healthy Containers](screenshots/healthy-containers.png)
+
+### Platform Health Check
+
+![Platform Health Check](screenshots/platform-health-check.png)
+
+### API Health Through Nginx
+
+![API Health](screenshots/api-health.png)
+
+### PostgreSQL Backup Automation
+
+![Database Backup](screenshots/database-backup.png)
 
 ---
 
