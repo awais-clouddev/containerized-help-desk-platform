@@ -3,6 +3,7 @@ import os
 
 import psycopg2
 import redis
+from redis.exceptions import RedisError
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -50,8 +51,11 @@ def get_redis_connection():
 def clear_ticket_cache():
     redis_connection = get_redis_connection()
 
-    for key in redis_connection.scan_iter("tickets:*"):
-        redis_connection.delete(key)
+    try:
+        for key in redis_connection.scan_iter("tickets:*"):
+            redis_connection.delete(key)
+    except RedisError:
+        pass  # Redis is optional; PostgreSQL remains authoritative.
 
 
 @app.get("/")
@@ -121,7 +125,10 @@ def get_tickets(
         f"status:{status.lower()}:priority:{priority.lower()}"
     )
 
-    cached_tickets = redis_connection.get(cache_key)
+    try:
+        cached_tickets = redis_connection.get(cache_key)
+    except RedisError:
+        cached_tickets = None
 
     if cached_tickets:
         return {
@@ -186,11 +193,14 @@ def get_tickets(
         for row in rows
     ]
 
-    redis_connection.setex(
-        cache_key,
-        60,
-        json.dumps(tickets),
-    )
+    try:
+        redis_connection.setex(
+            cache_key,
+            60,
+            json.dumps(tickets),
+        )
+    except RedisError:
+        pass
 
     return {
         "source": "postgresql",

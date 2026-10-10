@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -euo pipefail
 
 if [ -z "$1" ]; then
   echo "Usage: ./scripts/restore_database.sh <backup-file>"
@@ -14,8 +14,9 @@ if [ ! -f "$BACKUP_FILE" ]; then
   exit 1
 fi
 
-cat "$BACKUP_FILE" | docker exec -i helpdesk-postgres psql \
+docker exec -i helpdesk-postgres psql \
+  -X -v ON_ERROR_STOP=1 \
   -U helpdesk \
-  -d helpdesk
+  -d helpdesk < "$BACKUP_FILE"
 
 echo "Database restored from: $BACKUP_FILE"
