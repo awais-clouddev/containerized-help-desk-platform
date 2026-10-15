@@ -1,10 +1,13 @@
 #!/bin/bash
 
-set -e
+set -Eeuo pipefail
 
-case "$1" in
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$PROJECT_DIR"
+
+case "${1:-}" in
   start)
-    docker compose up -d
+    docker compose up -d --wait --wait-timeout 120
     ;;
 
   stop)
@@ -13,7 +16,7 @@ case "$1" in
 
   restart)
     docker compose down
-    docker compose up -d
+    docker compose up -d --wait --wait-timeout 120
     ;;
 
   status)
@@ -25,7 +28,7 @@ case "$1" in
     ;;
 
   logs)
-    if [ -z "$2" ]; then
+    if [ -z "${2:-}" ]; then
       echo "Usage: ./scripts/platform.sh logs <service-name>"
       echo "Available services: nginx, frontend, api, postgres, redis"
       exit 1

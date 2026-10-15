@@ -145,7 +145,7 @@ Update `.env` values if required.
 ### 3. Start the platform
 
 ```bash
-docker compose up -d --build
+docker compose up -d --build --wait --wait-timeout 120
 ```
 
 ### 4. Open the application
@@ -229,7 +229,7 @@ PostgreSQL uses a named Docker volume:
 postgres_data:
 ```
 
-This keeps database data safe even if the PostgreSQL container is removed or recreated.
+This preserves data across container recreation. It is not a backup, replication, or protection against volume deletion.
 
 ---
 
@@ -263,25 +263,24 @@ Run platform health script:
 
 ## Backup and Restore
 
-### Create PostgreSQL backup
+Create a backup:
 
-```bash
-./scripts/backup_database.sh
-```
+    ./scripts/backup_database.sh
 
-Backup files are created inside:
+Backups use unique filenames, private file permissions and atomic publication.
+Failed or empty dumps are rejected and temporary files are removed.
 
-```text
-backups/
-```
+Restore only a trusted plain SQL dump into an existing empty database:
 
-Backup files are ignored by Git because they may contain real data.
+    ./scripts/restore_database.sh /absolute/path/backup.sql --database recovered_helpdesk
 
-### Restore PostgreSQL backup
+The optional target defaults to POSTGRES_DB. An existing application database
+containing tables is deliberately rejected. Restoration uses one transaction
+and stops on SQL errors. Do not run concurrent writers against the target.
 
-```bash
-./scripts/restore_database.sh backups/<backup-file>.sql
-```
+See [operations and recovery](docs/operations.md) for database creation,
+cutover considerations and cache handling. No restore command automatically
+deletes existing application data.
 
 ---
 
@@ -345,7 +344,7 @@ This project includes several production-style improvements:
 - Database and Redis are private internal services
 - `.env` is ignored by Git
 - `.env.example` is provided for safe configuration
-- Restart policies recover stopped containers
+- Restart policies handle eligible container exits; unhealthy status alone does not restart a container
 - Health checks detect unhealthy services
 - Resource limits prevent excessive container usage
 - Backups support data recovery
@@ -375,7 +374,7 @@ docker compose logs api --tail=100
 Rebuild platform:
 
 ```bash
-docker compose up -d --build
+docker compose up -d --build --wait --wait-timeout 120
 ```
 
 Stop platform:
@@ -468,3 +467,55 @@ Cloud & DevOps Engineer
 GitHub: [awais-clouddev](https://github.com/awais-clouddev)
 
 ⭐ If you found this project useful, consider giving it a star.
+
+## Deployment Scope
+
+This is an independent Docker/DevOps portfolio lab using disposable
+demonstration data. It has no authentication or authorisation.
+Anyone who can reach the application can read, create and update tickets.
+Do not use real employee, customer or confidential data.
+
+The gateway binds to 127.0.0.1:8090 for local access. Database and Redis
+ports are not published to the host. Docker networks are not a substitute
+for application access controls.
+
+Real-user deployment requires authentication, authorisation, HTTPS,
+secure credential management and environment-specific security review.
+These remain accepted limitations of this local demonstration.
+
+## Validation and Operating Limits
+
+- [Regression and integration test instructions](tests/README.md)
+- [Operations and recovery](docs/operations.md)
+
+The API unit suite covers cache consistency, invalid cache payloads,
+database cleanup, rollback, timeout configuration and Redis-down writes.
+Frontend tests simulate browser APIs; they do not verify browser layout.
+
+The disposable integration drill was run successfully on 15 October 2026.
+It built a separate stack with fresh volumes and tested delayed database
+health, gateway ticket operations, case-insensitive filters, Redis failure,
+database failure and database restoration. Its resources were removed.
+
+Redis is optional for normal ticket reads/writes at runtime, but initial
+Compose startup waits for Redis health. The health endpoint reports 503
+when either PostgreSQL or Redis is unavailable.
+
+Cache responses expire after 60 seconds. Failed invalidation or concurrent
+cache repopulation can temporarily return stale results. This lab does not
+guarantee immediate cache consistency.
+
+Single-instance services, local database storage, no automatic failover,
+no authentication/authorisation, HTTP-only local access and no off-host
+backup automation are accepted lab limitations. Filters are available
+through the API; the browser currently exposes text search.
+
+Each build context has its own .dockerignore. API tests are intentionally
+included in the API image to support the documented test command.
+Fixed container names target one default local stack; the integration
+drill removes them only in its disposable configuration.
+
+Use matching DATABASE_* and POSTGRES_* credentials for normal setup.
+Changing POSTGRES_* does not reconfigure a previously initialised volume.
+Application database selection may intentionally differ during recovery.
+Do not publish .env, SQL backups or real-user data.
